@@ -1,0 +1,15 @@
+# Dados dos bancos (gerados pelo Docker)
+data/
+
+# Variáveis de ambiente com segredos (copie .env.example antes de commitar)
+.env
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
