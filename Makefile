@@ -2,7 +2,7 @@
 # Makefile — atalhos para o ambiente Docker de desenvolvimento
 # =============================================================
 .PHONY: help up down build rebuild logs shell shell-nginx \
-        mysql-cli mariadb-cli postgres-cli composer npm status clean info
+        mysql-cli mariadb-cli composer npm status clean info
 
 COMPOSE = docker compose
 WEB     = dev_web_apache
@@ -24,7 +24,6 @@ help:
 	@echo "  make shell-nginx  Abre shell no container Nginx/PHP"
 	@echo "  make mysql-cli    Abre cliente MySQL"
 	@echo "  make mariadb-cli  Abre cliente MariaDB"
-	@echo "  make postgres-cli Abre cliente PostgreSQL (psql)"
 	@echo "  make composer cmd='install'   Roda Composer no container web"
 	@echo "  make npm cmd='install'        Roda npm no container web"
 	@echo "  make clean        Remove volumes de dados (CUIDADO!)"
@@ -74,10 +73,6 @@ mysql-cli:
 # CLI MariaDB
 mariadb-cli:
 	docker exec -it dev_mariadb mariadb -u root -p
-
-# CLI PostgreSQL
-postgres-cli:
-	docker exec -it dev_postgres psql -U dev -d app_db
 
 # Composer (ex: make composer cmd="require vendor/pkg")
 composer:

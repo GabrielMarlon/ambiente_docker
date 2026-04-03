@@ -2,9 +2,8 @@
 declare(strict_types=1);
 
 $services = [
-    'MySQL'      => ['host' => 'mysql',    'port' => 3306, 'type' => 'mysql'],
-    'MariaDB'    => ['host' => 'mariadb',  'port' => 3306, 'type' => 'mysql'],
-    'PostgreSQL' => ['host' => 'postgres', 'port' => 5432, 'type' => 'pgsql'],
+    'MySQL'   => ['host' => 'mysql',   'port' => 3306, 'type' => 'mysql'],
+    'MariaDB' => ['host' => 'mariadb', 'port' => 3306, 'type' => 'mysql'],
 ];
 
 function checkDb(string $type, string $host, int $port): string {
@@ -86,7 +85,7 @@ function checkDb(string $type, string $host, int $port): string {
             <tr>
                 <td><?= $name ?></td>
                 <td><?= checkDb($cfg['type'], $cfg['host'], $cfg['port']) ?></td>
-                <td><span class="badge"><?= $cfg['type'] === 'pgsql' ? 'pdo_pgsql' : 'pdo_mysql' ?></span></td>
+                <td><span class="badge">pdo_mysql</span></td>
             </tr>
         <?php endforeach; ?>
         </tbody>
@@ -95,7 +94,6 @@ function checkDb(string $type, string $host, int $port): string {
     <div class="links">
         <strong>Links:</strong>
         <a href="http://localhost:8081" target="_blank">phpMyAdmin</a>
-        <a href="http://localhost:5050" target="_blank">pgAdmin</a>
         <a href="http://localhost:8080" target="_blank">Nginx</a>
         <a href="phpinfo.php">phpinfo()</a>
     </div>

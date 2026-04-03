@@ -1,6 +1,6 @@
 # Ambiente de Desenvolvimento Docker
 
-Ambiente completo para desenvolvimento web com **PHP 8.3**, **Apache**, **Nginx**, **MySQL**, **MariaDB** e **PostgreSQL**, orquestrado com Docker Compose.
+Ambiente completo para desenvolvimento web com **PHP 8.3**, **Apache**, **Nginx**, **MySQL** e **MariaDB**, orquestrado com Docker Compose.
 
 ---
 
@@ -21,9 +21,12 @@ ambiente_docker/
 │   │   └── start.sh          # Script de inicialização (FPM + Nginx)
 │   ├── php/
 │   │   └── custom.ini        # Configurações PHP (erros, Xdebug, etc.)
-│   └── mysql/
-│       └── init/
-│           └── 01_schema.sql # Script SQL executado na primeira subida
+│   ├── mysql/
+│   │   ├── my.cnf            # Charset e collation padrão (utf8mb4_general_ci)
+│   │   └── init/
+│   │       └── 01_schema.sql # Script SQL executado na primeira subida
+│   └── phpmyadmin/
+│       └── config.user.inc.php # Collation padrão no phpMyAdmin
 └── www/                      # Raiz dos seus projetos (bind mount)
     ├── index.php             # Página de status do ambiente
     └── phpinfo.php           # Informações do PHP
@@ -56,50 +59,53 @@ docker compose build
 docker compose up -d
 ```
 
-Aguarde o build das imagens (primeira vez demora alguns minutos).
+Ao final do `make up` as informações de acesso são exibidas automaticamente no terminal.
 
 ---
 
 ## Serviços e portas
 
-| Serviço     | URL / Endereço              | Porta padrão |
-|-------------|-----------------------------|--------------|
-| Apache/PHP  | http://localhost            | 80           |
-| Nginx/PHP   | http://localhost:8080       | 8080         |
-| phpMyAdmin  | http://localhost:8081       | 8081         |
-| pgAdmin     | http://localhost:5050       | 5050         |
-| MySQL       | localhost:3306              | 3306         |
-| MariaDB     | localhost:3307              | 3307         |
-| PostgreSQL  | localhost:5432              | 5432         |
+| Serviço    | URL / Endereço        | Porta padrão |
+|------------|-----------------------|--------------|
+| Apache/PHP | http://localhost      | 80           |
+| Nginx/PHP  | http://localhost:8080 | 8080         |
+| phpMyAdmin | http://localhost:8081 | 8081         |
+| MySQL      | localhost:3306        | 3306         |
+| MariaDB    | localhost:3307        | 3307         |
 
-> Para mudar portas, edite o arquivo `.env`.
+> Para alterar portas, edite o arquivo `.env`.
 
 ---
 
 ## Credenciais padrão
 
-### MySQL / MariaDB
-| Campo    | Valor     |
-|----------|-----------|
-| Host     | `mysql` / `mariadb` (interno) ou `localhost` (externo) |
-| Database | `app_db`  |
-| User     | `dev`     |
-| Password | `dev123`  |
-| Root pw  | `root`    |
+### MySQL
+| Campo    | Valor    |
+|----------|----------|
+| Host     | `mysql` (interno) · `localhost:3306` (externo) |
+| Database | `app_db` |
+| User     | `dev`    |
+| Password | `dev123` |
+| Root pw  | `root`   |
 
-### PostgreSQL
-| Campo    | Valor     |
-|----------|-----------|
-| Host     | `postgres` (interno) ou `localhost` (externo) |
-| Database | `app_db`  |
-| User     | `dev`     |
-| Password | `dev123`  |
+### MariaDB
+| Campo    | Valor    |
+|----------|----------|
+| Host     | `mariadb` (interno) · `localhost:3307` (externo) |
+| Database | `app_db` |
+| User     | `dev`    |
+| Password | `dev123` |
+| Root pw  | `root`   |
 
-### pgAdmin
-| Campo | Valor            |
-|-------|------------------|
-| Email | admin@admin.com  |
-| Senha | admin123         |
+### phpMyAdmin
+| Campo    | Valor                    |
+|----------|--------------------------|
+| URL      | http://localhost:8081    |
+| Servidor | `mysql`                  |
+| Usuário  | `root` (ou `dev`)        |
+| Senha    | `root` (ou `dev123`)     |
+
+> A collation padrão ao criar banco está configurada como **utf8mb4_general_ci**.
 
 ---
 
@@ -109,7 +115,6 @@ Use `localhost` como host e as portas expostas:
 
 - MySQL → `localhost:3306`
 - MariaDB → `localhost:3307`
-- PostgreSQL → `localhost:5432`
 
 ---
 
@@ -135,34 +140,34 @@ As alterações são refletidas instantaneamente — **sem necessidade de rebuil
 ## Comandos úteis (Makefile)
 
 ```bash
-make up              # Sobe todos os containers
-make down            # Para os containers
-make build           # Builda as imagens
-make rebuild         # Rebuild sem cache (útil após mudar Dockerfile)
-make status          # Lista containers
-make logs            # Logs de todos os serviços
-make logs s=web      # Logs de um serviço específico
-make shell           # Shell no container Apache/PHP
-make shell-nginx     # Shell no container Nginx/PHP
-make mysql-cli       # Cliente MySQL interativo
-make mariadb-cli     # Cliente MariaDB interativo
-make postgres-cli    # psql interativo
+make up                # Sobe todos os containers e exibe info de acesso
+make down              # Para os containers
+make build             # Builda as imagens
+make rebuild           # Rebuild sem cache (útil após mudar Dockerfile)
+make status            # Lista containers
+make info              # Exibe informações de acesso novamente
+make logs              # Logs de todos os serviços
+make logs s=web        # Logs de um serviço específico
+make shell             # Shell no container Apache/PHP
+make shell-nginx       # Shell no container Nginx/PHP
+make mysql-cli         # Cliente MySQL interativo
+make mariadb-cli       # Cliente MariaDB interativo
 make composer cmd="require laravel/framework"
 make npm cmd="install"
-make clean           # Remove volumes (apaga dados dos bancos!)
+make clean             # Remove volumes (apaga dados dos bancos!)
 ```
 
 ---
 
 ## Extensões PHP instaladas
 
-`pdo`, `pdo_mysql`, `pdo_pgsql`, `mysqli`, `pgsql`, `gd`, `zip`, `mbstring`, `exif`, `bcmath`, `xml`, `curl`, `intl`, `opcache`, `redis`, `xdebug`
+`pdo`, `pdo_mysql`, `mysqli`, `gd`, `zip`, `mbstring`, `exif`, `bcmath`, `xml`, `curl`, `intl`, `opcache`, `redis`, `xdebug`
 
 ---
 
 ## Xdebug
 
-Configurado no modo `develop,debug,coverage`. Para usar com VS Code, instale a extensão **PHP Debug** e crie `.vscode/launch.json`:
+Configurado no modo `develop,debug,coverage` na porta `9003`. Para usar com VS Code, instale a extensão **PHP Debug** e crie `.vscode/launch.json`:
 
 ```json
 {
