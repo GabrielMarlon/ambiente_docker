@@ -8,7 +8,7 @@ CREATE DATABASE IF NOT EXISTS `phpmyadmin`
     COLLATE utf8mb4_general_ci;
 
 -- Usuário de controle exclusivo para o phpMyAdmin
-CREATE USER IF NOT EXISTS 'pma'@'%' IDENTIFIED BY 'pmapass';
+CREATE USER IF NOT EXISTS 'pma'@'%' IDENTIFIED BY 'Pma@S3cur3!2024';
 GRANT ALL PRIVILEGES ON `phpmyadmin`.* TO 'pma'@'%';
 FLUSH PRIVILEGES;
 

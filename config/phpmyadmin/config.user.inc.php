@@ -8,8 +8,8 @@ $cfg['DefaultCollation']           = 'utf8mb4_general_ci';
 $cfg['Servers'][1]['pmadb']                    = 'phpmyadmin';
 $cfg['Servers'][1]['controlhost']              = 'mysql';
 $cfg['Servers'][1]['controlport']              = '3306';
-$cfg['Servers'][1]['controluser']              = 'pma';
-$cfg['Servers'][1]['controlpass']              = 'pmapass';
+$cfg['Servers'][1]['controluser']              = getenv('PMA_CONTROLUSER') ?: 'pma';
+$cfg['Servers'][1]['controlpass']              = getenv('PMA_CONTROLPASS') ?: '';
 
 $cfg['Servers'][1]['bookmarktable']            = 'pma__bookmark';
 $cfg['Servers'][1]['relation']                 = 'pma__relation';
