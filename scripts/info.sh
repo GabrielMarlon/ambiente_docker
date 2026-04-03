@@ -79,7 +79,7 @@ echo ""
 echo -e "${BOLD}  Gerenciamento de Banco${RESET}"
 echo -e "  ${GREEN}►${RESET} phpMyAdmin     ${CYAN}http://localhost:${PORT_PHPMYADMIN}${RESET}"
 echo -e "  ${GREEN}►${RESET} pgAdmin        ${CYAN}http://localhost:${PORT_PGADMIN}${RESET}"
-echo -e "                 ${DIM}email: admin@dev.local  /  senha: admin123${RESET}"
+echo -e "                 ${DIM}email: admin@admin.com  /  senha: admin123${RESET}"
 echo ""
 
 echo -e "${BOLD}  Bancos de Dados${RESET}"

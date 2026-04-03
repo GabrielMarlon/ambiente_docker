@@ -98,7 +98,7 @@ Aguarde o build das imagens (primeira vez demora alguns minutos).
 ### pgAdmin
 | Campo | Valor            |
 |-------|------------------|
-| Email | admin@dev.local  |
+| Email | admin@admin.com  |
 | Senha | admin123         |
 
 ---
