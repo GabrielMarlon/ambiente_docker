@@ -10,8 +10,8 @@ $services = [
 function checkDb(string $host, int $port): string {
     try {
         $pdo = new PDO(
-            "mysql:host=$host;port=$port;dbname=app_db",
-            'dev', 'dev123',
+            "mysql:host=$host;port=$port",
+            'root', 'root',
             [PDO::ATTR_TIMEOUT => 2]
         );
         return '<span class="ok">&#10003; Online</span>';
@@ -165,10 +165,6 @@ $projects = array_values($projects);
             <a class="tool-link" href="http://localhost:8081" target="_blank">
                 &#128200; phpMyAdmin
                 <span class="port">:8081</span>
-            </a>
-            <a class="tool-link" href="http://localhost:8080" target="_blank">
-                &#127760; Nginx
-                <span class="port">:8080</span>
             </a>
             <a class="tool-link" href="phpinfo.php" target="_blank">
                 &#128196; phpinfo()

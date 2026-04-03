@@ -1,5 +1,7 @@
 # =============================================================
 # Ambiente de desenvolvimento web — PHP + Apache/Nginx + DBs
+# Use: docker compose --profile apache up -d
+#      docker compose --profile nginx  up -d
 # =============================================================
 
 networks:
@@ -13,7 +15,7 @@ volumes:
 services:
 
   # -----------------------------------------------------------
-  # PHP + Apache (porta 80)
+  # PHP + Apache  →  make apache
   # -----------------------------------------------------------
   web:
     build:
@@ -21,6 +23,7 @@ services:
       dockerfile: Dockerfile
     container_name: dev_web_apache
     restart: unless-stopped
+    profiles: [apache]
     ports:
       - "${PORT_HTTP:-80}:80"
     volumes:
@@ -36,7 +39,7 @@ services:
       - devnet
 
   # -----------------------------------------------------------
-  # PHP + Nginx (porta 8080) — compartilha o mesmo código
+  # PHP + Nginx  →  make nginx
   # -----------------------------------------------------------
   nginx:
     build:
@@ -44,8 +47,9 @@ services:
       dockerfile: Dockerfile.nginx
     container_name: dev_web_nginx
     restart: unless-stopped
+    profiles: [nginx]
     ports:
-      - "${PORT_NGINX:-8080}:80"
+      - "${PORT_HTTP:-80}:80"
     volumes:
       - ./www:/var/www/html:rw
       - ./config/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
@@ -67,7 +71,7 @@ services:
       - "${PORT_MYSQL:-3306}:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE:      ${MYSQL_DATABASE}
+      #MYSQL_DATABASE:      ${MYSQL_DATABASE}
       MYSQL_USER:          ${MYSQL_USER}
       MYSQL_PASSWORD:      ${MYSQL_PASSWORD}
     volumes:
@@ -93,7 +97,7 @@ services:
       - "${PORT_MARIADB:-3307}:3306"
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
-      MARIADB_DATABASE:      ${MARIADB_DATABASE}
+      #MARIADB_DATABASE:      ${MARIADB_DATABASE}
       MARIADB_USER:          ${MARIADB_USER}
       MARIADB_PASSWORD:      ${MARIADB_PASSWORD}
     volumes:
@@ -107,7 +111,7 @@ services:
       retries: 5
 
   # -----------------------------------------------------------
-  # phpMyAdmin — gerencia MySQL e MariaDB
+  # phpMyAdmin
   # -----------------------------------------------------------
   phpmyadmin:
     image: phpmyadmin:5

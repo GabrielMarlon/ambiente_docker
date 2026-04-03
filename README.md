@@ -83,7 +83,6 @@ Ao final do `make up` as informações de acesso são exibidas automaticamente n
 | Campo    | Valor    |
 |----------|----------|
 | Host     | `mysql` (interno) · `localhost:3306` (externo) |
-| Database | `app_db` |
 | User     | `dev`    |
 | Password | `dev123` |
 | Root pw  | `root`   |
@@ -92,7 +91,6 @@ Ao final do `make up` as informações de acesso são exibidas automaticamente n
 | Campo    | Valor    |
 |----------|----------|
 | Host     | `mariadb` (interno) · `localhost:3307` (externo) |
-| Database | `app_db` |
 | User     | `dev`    |
 | Password | `dev123` |
 | Root pw  | `root`   |
