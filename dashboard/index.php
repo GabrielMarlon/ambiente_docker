@@ -20,10 +20,9 @@ function checkDb(string $host, int $port): string {
     }
 }
 
-// --- Projetos: escaneia subpastas de /var/www/html ---
+// --- Projetos: escaneia subpastas de /var/www/html/www ---
 $projects = [];
-$root     = __DIR__;
-$skip     = ['phpinfo.php'];
+$root     = '/var/www/projects';
 
 foreach (new DirectoryIterator($root) as $item) {
     if (!$item->isDir() || $item->isDot() || str_starts_with($item->getFilename(), '.')) {
@@ -180,7 +179,7 @@ $projects = array_values($projects);
         <?php else: ?>
             <div class="projects-grid">
             <?php foreach ($projects as $project): ?>
-                <a class="project-card" href="/<?= htmlspecialchars($project) ?>/" target="_blank">
+                <a class="project-card" href="/www/<?= htmlspecialchars($project) ?>/" target="_blank">
                     <span class="icon">&#128193;</span>
                     <?= htmlspecialchars($project) ?>
                 </a>

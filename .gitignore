@@ -16,3 +16,5 @@ Thumbs.db
 
 # Projetos
 www/albiontrade
+config/mysql/init/02_albiontrade.sql
+update.md
