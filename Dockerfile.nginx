@@ -52,6 +52,9 @@ RUN pecl install redis xdebug \
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Remove o virtual host padrão do pacote nginx que conflita com conf.d/default.conf
+RUN rm -f /etc/nginx/sites-enabled/default
+
 WORKDIR /var/www/html
 
 # Script de inicialização (Nginx + PHP-FPM)

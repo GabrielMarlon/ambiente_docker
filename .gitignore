@@ -16,5 +16,10 @@ Thumbs.db
 
 # Projetos
 www/albiontrade
+www/portifolio
+www/althea
+www/portifolio-personal
 config/mysql/init/02_albiontrade.sql
+config/mysql/init/03_seed_albiontrade.sql
 update.md
+upgrade.md

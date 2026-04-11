@@ -61,6 +61,14 @@ else
 fi
 echo ""
 
+LOCAL_IP=$(ip route get 1 2>/dev/null | awk '{print $7; exit}')
+if [ -n "$LOCAL_IP" ]; then
+    echo -e "${BOLD}  Acesso na rede local (celular/outros dispositivos)${RESET}"
+    echo -e "  ${GREEN}►${RESET} Site        ${CYAN}http://${LOCAL_IP}:${PORT_HTTP}${RESET}"
+    echo -e "  ${GREEN}►${RESET} phpMyAdmin  ${CYAN}http://${LOCAL_IP}:${PORT_PHPMYADMIN}${RESET}"
+    echo ""
+fi
+
 echo -e "${BOLD}  Gerenciamento de Banco${RESET}"
 echo -e "  ${GREEN}►${RESET} phpMyAdmin     ${CYAN}http://localhost:${PORT_PHPMYADMIN}${RESET}"
 echo ""
