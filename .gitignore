@@ -18,7 +18,7 @@ Thumbs.db
 www/albiontrade
 www/portifolio
 www/althea
-www/portifolio-personal
+www/portifolios
 config/mysql/init/02_albiontrade.sql
 config/mysql/init/03_seed_albiontrade.sql
 update.md
