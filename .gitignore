@@ -13,13 +13,11 @@ data/
 # OS
 .DS_Store
 Thumbs.db
-
-# Projetos
-www/albiontrade
-www/portifolio
-www/althea
-www/portifolios
 config/mysql/init/02_albiontrade.sql
 config/mysql/init/03_seed_albiontrade.sql
 update.md
 upgrade.md
+
+# Projetos
+www/albiontrade
+www/portifolios

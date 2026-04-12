@@ -109,6 +109,10 @@ function renderTree(array $items): void {
 
 $tree  = scanProjects('/var/www/projects', '/www');
 $total = countProjects($tree);
+
+// URL do phpMyAdmin usando o mesmo host do request (funciona no celular via IP local)
+$currentHost = strtok($_SERVER['HTTP_HOST'] ?? 'localhost', ':'); // remove porta se houver
+$pmaUrl      = 'http://' . $currentHost . ':8081';
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -295,7 +299,7 @@ $total = countProjects($tree);
     <div class="card">
         <h2>Ferramentas</h2>
         <div class="tools">
-            <a class="tool-link" href="http://localhost:8081" target="_blank">
+            <a class="tool-link" href="<?= htmlspecialchars($pmaUrl) ?>" target="_blank">
                 &#128200; phpMyAdmin
                 <span class="port">:8081</span>
             </a>
