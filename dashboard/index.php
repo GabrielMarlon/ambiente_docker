@@ -7,102 +7,83 @@ $services = [
     'MariaDB' => ['host' => 'mariadb', 'port' => 3306],
 ];
 
-function checkDb(string $host, int $port): string {
+function checkDb(string $host, int $port): array {
     try {
         new PDO("mysql:host=$host;port=$port", 'root', 'root', [PDO::ATTR_TIMEOUT => 2]);
-        return '<span class="ok">&#10003; Online</span>';
+        return ['online' => true];
     } catch (PDOException) {
-        return '<span class="err">&#10007; Offline</span>';
+        return ['online' => false];
     }
 }
 
 // ── Scan recursivo de /var/www/projects ──────────────────────────────────────
-//
-// Regra:
-//   • Pasta COM index.php ou index.html  → projeto  (card clicável)
-//   • Pasta SEM index                    → categoria (expansível, escaneia filhos)
-//
 function scanProjects(string $dir, string $urlBase): array {
     $items = [];
     if (!is_dir($dir)) return $items;
-
     foreach (new DirectoryIterator($dir) as $entry) {
-        if (!$entry->isDir() || $entry->isDot() || str_starts_with($entry->getFilename(), '.')) {
-            continue;
-        }
+        if (!$entry->isDir() || $entry->isDot() || str_starts_with($entry->getFilename(), '.')) continue;
         $name     = $entry->getFilename();
         $fullPath = $dir . '/' . $name;
         $url      = $urlBase . '/' . $name;
-        $hasIndex = file_exists($fullPath . '/index.php')
-                 || file_exists($fullPath . '/index.html');
-
-        $items[] = [
+        $hasIndex = file_exists($fullPath . '/index.php') || file_exists($fullPath . '/index.html');
+        $items[]  = [
             'name'     => $name,
             'url'      => $url,
             'hasIndex' => $hasIndex,
-            // só recorre em categorias (sem index)
             'children' => $hasIndex ? [] : scanProjects($fullPath, $url),
         ];
     }
-
     usort($items, fn($a, $b) => strcasecmp($a['name'], $b['name']));
     return $items;
 }
 
-// Conta projetos (folhas com index) recursivamente
 function countProjects(array $items): int {
     $n = 0;
-    foreach ($items as $item) {
-        $n += $item['hasIndex'] ? 1 : countProjects($item['children']);
-    }
+    foreach ($items as $item) $n += $item['hasIndex'] ? 1 : countProjects($item['children']);
     return $n;
 }
 
-// Renderiza a árvore como HTML
-function renderTree(array $items): void {
+function renderTree(array $items, int $depth = 0): void {
     if (empty($items)) return;
-
     $projects   = array_values(array_filter($items, fn($i) =>  $i['hasIndex']));
     $categories = array_values(array_filter($items, fn($i) => !$i['hasIndex']));
 
-    // projetos aparecem primeiro (grade de cards)
     if (!empty($projects)) {
-        echo '<div class="projects-grid">';
+        echo '<div class="proj-grid">';
         foreach ($projects as $p) {
             $href  = htmlspecialchars($p['url'] . '/');
             $label = htmlspecialchars($p['name']);
-            echo "<a class=\"project-card\" href=\"{$href}\" target=\"_blank\">"
-               . '<span class="p-icon">&#127760;</span>'
+            echo "<a class=\"proj-card\" href=\"{$href}\" target=\"_blank\">"
+               . '<svg class="proj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>'
                . "<span>{$label}</span>"
+               . '<svg class="ext-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'
                . '</a>';
         }
         echo '</div>';
     }
 
-    // categorias aparecem depois (expansíveis)
     foreach ($categories as $cat) {
         $label = htmlspecialchars($cat['name']);
         $count = countProjects($cat['children']);
         $badge = $count > 0
-               ? "<span class=\"badge\">{$count} " . ($count === 1 ? 'projeto' : 'projetos') . '</span>'
-               : '<span class="badge badge-empty">vazia</span>';
+               ? "<span class=\"cat-badge\">{$count}</span>"
+               : '<span class="cat-badge cat-badge-empty">0</span>';
 
-        echo "<details class=\"category\">"
-           . "<summary class=\"cat-header\">"
-           . '<span class="cat-arrow">&#9656;</span>'
-           . '<span class="cat-icon">&#128193;</span>'
-           . "<span class=\"cat-name\">{$label}</span>"
+        echo "<details class=\"cat-details\">"
+           . "<summary class=\"cat-summary\">"
+           . '<svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>'
+           . '<svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>'
+           . "<span class=\"cat-label\">{$label}</span>"
            . $badge
            . '</summary>';
 
         if (!empty($cat['children'])) {
-            echo '<div class="cat-body">';
-            renderTree($cat['children']);
+            echo '<div class="cat-children">';
+            renderTree($cat['children'], $depth + 1);
             echo '</div>';
         } else {
-            echo '<p class="empty-cat">Pasta vazia — adicione projetos ou subpastas aqui.</p>';
+            echo '<p class="cat-empty">Pasta vazia — nenhum projeto ou subpasta encontrado.</p>';
         }
-
         echo '</details>';
     }
 }
@@ -110,223 +91,160 @@ function renderTree(array $items): void {
 $tree  = scanProjects('/var/www/projects', '/www');
 $total = countProjects($tree);
 
-// URL do phpMyAdmin usando o mesmo host do request (funciona no celular via IP local)
-$currentHost = strtok($_SERVER['HTTP_HOST'] ?? 'localhost', ':'); // remove porta se houver
+$currentHost = strtok($_SERVER['HTTP_HOST'] ?? 'localhost', ':');
 $pmaUrl      = 'http://' . $currentHost . ':8081';
+
+$dbResults = [];
+foreach ($services as $name => $cfg) {
+    $dbResults[$name] = checkDb($cfg['host'], $cfg['port']);
+    $dbResults[$name]['host'] = $cfg['host'];
+    $dbResults[$name]['port'] = $cfg['port'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ambiente Docker Dev</title>
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
-            min-height: 100vh;
-            padding: 2.5rem 1.5rem;
-        }
-
-        .layout {
-            max-width: 960px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.25rem;
-        }
-
-        @media (max-width: 640px) { .layout { grid-template-columns: 1fr; } }
-
-        /* ── Cards base ─────────────────────────────────── */
-        .card {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 12px;
-            padding: 1.5rem;
-        }
-        .card-full { grid-column: 1 / -1; }
-
-        h1 { font-size: 1.4rem; color: #38bdf8; margin-bottom: .2rem; }
-        .subtitle { color: #64748b; font-size: .8rem; margin-bottom: 1.5rem; }
-
-        h2 {
-            font-size: .7rem; font-weight: 600;
-            text-transform: uppercase; letter-spacing: .08em;
-            color: #64748b; margin-bottom: 1rem;
-            display: flex; align-items: center; gap: .5rem;
-        }
-        h2 .total {
-            font-size: .68rem; background: #273349; color: #94a3b8;
-            padding: .1rem .45rem; border-radius: 20px; font-weight: 500;
-            text-transform: none; letter-spacing: 0;
-        }
-
-        /* ── Tabela de serviços ──────────────────────────── */
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: .5rem .6rem; text-align: left;
-                 border-bottom: 1px solid #273349; font-size: .82rem; }
-        th { color: #64748b; font-weight: 500; }
-        tr:last-child td { border-bottom: none; }
-        .ok  { color: #22c55e; }
-        .err { color: #ef4444; }
-
-        /* ── Links de ferramentas ─────────────────────────── */
-        .tools { display: flex; flex-direction: column; gap: .5rem; }
-        .tool-link {
-            display: flex; align-items: center; gap: .6rem;
-            padding: .5rem .75rem;
-            background: #0f172a; border: 1px solid #273349;
-            border-radius: 8px; color: #e2e8f0;
-            text-decoration: none; font-size: .82rem;
-            transition: border-color .15s;
-        }
-        .tool-link:hover { border-color: #38bdf8; color: #38bdf8; }
-        .tool-link .port { margin-left: auto; color: #475569; font-size: .75rem; }
-
-        /* ── Grade de projetos (cards) ───────────────────── */
-        .projects-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: .65rem;
-            margin-bottom: .5rem;
-        }
-
-        .project-card {
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            gap: .45rem; padding: 1rem .75rem;
-            background: #0f172a; border: 1px solid #273349;
-            border-radius: 10px; text-decoration: none;
-            color: #e2e8f0; font-size: .8rem; font-weight: 500;
-            text-align: center; word-break: break-word;
-            transition: border-color .15s, background .15s;
-        }
-        .project-card:hover { border-color: #38bdf8; background: #162032; color: #38bdf8; }
-        .p-icon { font-size: 1.5rem; line-height: 1; }
-
-        /* ── Categoria (details/summary) ─────────────────── */
-        .category {
-            border: 1px solid #273349;
-            border-radius: 10px;
-            margin-top: .75rem;
-            overflow: hidden;
-        }
-
-        /* remove o marcador padrão do navegador */
-        .cat-header { list-style: none; }
-        .cat-header::-webkit-details-marker { display: none; }
-
-        .cat-header {
-            display: flex; align-items: center; gap: .55rem;
-            padding: .65rem 1rem;
-            background: #152035; cursor: pointer;
-            font-size: .82rem; font-weight: 600; color: #94a3b8;
-            user-select: none;
-            transition: background .15s, color .15s;
-        }
-        .cat-header:hover { background: #1c2d45; color: #e2e8f0; }
-
-        .cat-arrow {
-            font-size: .55rem; color: #475569;
-            transition: transform .2s;
-            display: inline-block;
-        }
-        details[open] > .cat-header .cat-arrow { transform: rotate(90deg); }
-
-        .cat-icon  { font-size: 1rem; }
-        .cat-name  { flex: 1; }
-
-        .badge {
-            font-size: .68rem; font-weight: 500;
-            background: #1e3a5f; color: #38bdf8;
-            padding: .1rem .5rem; border-radius: 20px;
-            white-space: nowrap;
-        }
-        .badge-empty { background: #1e293b; color: #475569; }
-
-        /* Conteúdo interno da categoria */
-        .cat-body {
-            padding: .85rem 1rem .85rem 1.75rem;
-            border-top: 1px solid #1e2d40;
-            /* linha vertical de indentação */
-            border-left: 2px solid #1e3a5f;
-            margin-left: 1.1rem;
-        }
-
-        /* Categoria vazia */
-        .empty-cat {
-            padding: .75rem 1rem;
-            color: #475569; font-size: .78rem;
-            border-top: 1px solid #1e2d40;
-            font-style: italic;
-        }
-
-        /* Mensagem quando www/ está totalmente vazio */
-        .empty-root { color: #475569; font-size: .82rem; }
-    </style>
+    <title>Dev Environment</title>
+    <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
-<div class="layout">
 
-    <!-- Cabeçalho -->
-    <div class="card card-full">
-        <h1>Ambiente Docker Dev</h1>
-        <p class="subtitle">PHP <?= PHP_VERSION ?> &bull; <?= date('d/m/Y H:i:s') ?></p>
+<!-- ── Topbar ──────────────────────────────────────────────────────────────── -->
+<header class="topbar">
+    <div class="topbar-inner">
+        <div class="brand">
+            <span class="brand-pulse"></span>
+            <span class="brand-name">Dev Environment</span>
+            <span class="brand-tag">local</span>
+        </div>
+        <div class="topbar-meta">
+            <span class="meta-pill">PHP <?= PHP_VERSION ?></span>
+            <span class="meta-time" id="clock"><?= date('H:i:s') ?></span>
+        </div>
+    </div>
+</header>
+
+<!-- ── Conteúdo ────────────────────────────────────────────────────────────── -->
+<main class="main">
+
+    <!-- Linha: Bancos + Ferramentas -->
+    <div class="row">
+
+        <!-- Bancos de dados -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                        <path d="M3 5v14c0 1.657 4.03 3 9 3s9-1.343 9-3V5"/>
+                        <path d="M3 12c0 1.657 4.03 3 9 3s9-1.343 9-3"/>
+                    </svg>
+                    Databases
+                </span>
+            </div>
+            <div class="card-body">
+                <table class="db-table">
+                    <thead>
+                        <tr>
+                            <th>Serviço</th>
+                            <th>Status</th>
+                            <th>Host</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($dbResults as $name => $res): ?>
+                        <tr>
+                            <td><?= $name ?></td>
+                            <td>
+                                <?php if ($res['online']): ?>
+                                    <span class="status status-online">
+                                        <span class="status-dot"></span>Online
+                                    </span>
+                                <?php else: ?>
+                                    <span class="status status-offline">
+                                        <span class="status-dot"></span>Offline
+                                    </span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="col-host"><?= $res['host'] ?>:<?= $res['port'] ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Ferramentas -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                    </svg>
+                    Tools
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="tools-list">
+                    <a class="tool-link" href="<?= htmlspecialchars($pmaUrl) ?>" target="_blank">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <path d="M3 9h18M9 21V9"/>
+                        </svg>
+                        phpMyAdmin
+                        <span class="tool-badge">:8081</span>
+                    </a>
+                    <a class="tool-link" href="phpinfo.php" target="_blank">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        phpinfo()
+                    </a>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Status dos bancos -->
+    <!-- Projetos -->
     <div class="card">
-        <h2>Bancos de dados</h2>
-        <table>
-            <thead><tr><th>Serviço</th><th>Status</th><th>Host</th></tr></thead>
-            <tbody>
-            <?php foreach ($services as $svcName => $cfg): ?>
-                <tr>
-                    <td><?= $svcName ?></td>
-                    <td><?= checkDb($cfg['host'], $cfg['port']) ?></td>
-                    <td style="color:#475569"><?= $cfg['host'] ?></td>
-                </tr>
-            <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Ferramentas -->
-    <div class="card">
-        <h2>Ferramentas</h2>
-        <div class="tools">
-            <a class="tool-link" href="<?= htmlspecialchars($pmaUrl) ?>" target="_blank">
-                &#128200; phpMyAdmin
-                <span class="port">:8081</span>
-            </a>
-            <a class="tool-link" href="phpinfo.php" target="_blank">
-                &#128196; phpinfo()
-            </a>
+        <div class="card-header">
+            <span class="card-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
+                </svg>
+                Projects
+            </span>
+            <?php if ($total > 0): ?>
+                <span class="count-pill">
+                    <?= $total ?> <?= $total === 1 ? 'projeto' : 'projetos' ?>
+                </span>
+            <?php endif; ?>
+        </div>
+        <div class="card-body">
+            <?php if (empty($tree)): ?>
+                <p class="empty-root">
+                    Nenhuma pasta encontrada. Crie um diretório dentro de <code>www/</code> para ele aparecer aqui.
+                </p>
+            <?php else: ?>
+                <?php renderTree($tree); ?>
+            <?php endif; ?>
         </div>
     </div>
 
-    <!-- Projetos: árvore recursiva -->
-    <div class="card card-full">
-        <h2>
-            Projetos em www/
-            <?php if ($total > 0): ?>
-                <span class="total"><?= $total ?> <?= $total === 1 ? 'projeto' : 'projetos' ?></span>
-            <?php endif; ?>
-        </h2>
+</main>
 
-        <?php if (empty($tree)): ?>
-            <p class="empty-root">
-                Nenhuma pasta encontrada. Crie um diretório dentro de <code>www/</code> para ele aparecer aqui.
-            </p>
-        <?php else: ?>
-            <?php renderTree($tree); ?>
-        <?php endif; ?>
-    </div>
-
-</div>
+<script>
+    // Atualiza o relógio a cada segundo
+    const clock = document.getElementById('clock');
+    setInterval(() => {
+        const now = new Date();
+        clock.textContent = now.toLocaleTimeString('pt-BR', { hour12: false });
+    }, 1000);
+</script>
 </body>
 </html>
