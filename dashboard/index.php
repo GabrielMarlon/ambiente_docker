@@ -87,7 +87,7 @@ function renderTree(array $items): void {
                ? "<span class=\"badge\">{$count} " . ($count === 1 ? 'projeto' : 'projetos') . '</span>'
                : '<span class="badge badge-empty">vazia</span>';
 
-        echo "<details class=\"category\" open>"
+        echo "<details class=\"category\">"
            . "<summary class=\"cat-header\">"
            . '<span class="cat-arrow">&#9656;</span>'
            . '<span class="cat-icon">&#128193;</span>'
