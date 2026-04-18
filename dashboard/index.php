@@ -210,6 +210,32 @@ foreach ($services as $name => $cfg) {
 
     </div>
 
+    <!-- Recursos dos Containers -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="2" y="3" width="20" height="14" rx="2"/>
+                    <path d="M8 21h8M12 17v4"/>
+                    <path d="M6 8h4M6 11h6"/>
+                </svg>
+                Container Resources
+            </span>
+            <button class="res-refresh-btn" id="res-refresh" title="Atualizar">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10"/>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                </svg>
+            </button>
+        </div>
+        <div class="card-body" id="res-body">
+            <div class="res-loading">
+                <span class="res-spinner"></span>
+                Coletando métricas…
+            </div>
+        </div>
+    </div>
+
     <!-- Projetos -->
     <div class="card">
         <div class="card-header">
@@ -239,12 +265,117 @@ foreach ($services as $name => $cfg) {
 </main>
 
 <script>
-    // Atualiza o relógio a cada segundo
+    // Relógio
     const clock = document.getElementById('clock');
     setInterval(() => {
-        const now = new Date();
-        clock.textContent = now.toLocaleTimeString('pt-BR', { hour12: false });
+        clock.textContent = new Date().toLocaleTimeString('pt-BR', { hour12: false });
     }, 1000);
+
+    // ── Container Resources ──────────────────────────────
+    let resReady = false;
+
+    function fmtBytes(b) {
+        if (b >= 1073741824) return (b / 1073741824).toFixed(2) + ' GB';
+        if (b >= 1048576)    return (b / 1048576).toFixed(1)  + ' MB';
+        return Math.round(b / 1024) + ' KB';
+    }
+
+    function barColor(pct) {
+        if (pct >= 80) return 'var(--danger)';
+        if (pct >= 50) return 'var(--warning)';
+        return 'var(--success)';
+    }
+
+    function slug(name) {
+        return name.replace(/[^a-zA-Z0-9_-]/g, '_');
+    }
+
+    // Primeira renderização: cria a tabela com IDs nos elementos mutáveis
+    function renderFull(stats) {
+        const body = document.getElementById('res-body');
+        if (!Array.isArray(stats) || stats.length === 0) {
+            body.innerHTML = '<p class="empty-root">Nenhum container em execução.</p>';
+            resReady = false;
+            return;
+        }
+        let html = '<table class="res-table"><thead><tr>'
+                 + '<th>Container</th><th>CPU</th><th>Memória</th><th colspan="2">Uso Mem.</th>'
+                 + '</tr></thead><tbody>';
+        for (const s of stats) {
+            const k     = slug(s.name);
+            const color = barColor(s.memPct);
+            const width = Math.min(s.memPct, 100).toFixed(1);
+            html += `<tr>
+                <td class="res-name">${s.name}</td>
+                <td class="res-cpu"  id="rc-${k}">${s.cpuPct.toFixed(2)}%</td>
+                <td class="res-mem-label" id="rm-${k}">${fmtBytes(s.memActual)} / ${fmtBytes(s.memLimit)}</td>
+                <td class="res-bar-cell">
+                    <div class="res-bar-track">
+                        <div class="res-bar-fill" id="rb-${k}" style="width:${width}%;background:${color}"></div>
+                    </div>
+                </td>
+                <td class="res-pct" id="rp-${k}">${s.memPct}%</td>
+            </tr>`;
+        }
+        html += '</tbody></table>';
+        body.innerHTML = html;
+        resReady = true;
+    }
+
+    // Atualizações silenciosas: apenas muda os valores nas células existentes
+    function applyUpdate(stats) {
+        const currentNames = new Set(
+            [...document.querySelectorAll('.res-name')].map(el => el.textContent)
+        );
+        const newNames = new Set(stats.map(s => s.name));
+        // Se a lista de containers mudou, faz re-render completo
+        if (currentNames.size !== newNames.size ||
+            [...newNames].some(n => !currentNames.has(n))) {
+            renderFull(stats);
+            return;
+        }
+        for (const s of stats) {
+            const k   = slug(s.name);
+            const bar = document.getElementById(`rb-${k}`);
+            if (!bar) continue;
+            document.getElementById(`rc-${k}`).textContent = s.cpuPct.toFixed(2) + '%';
+            document.getElementById(`rm-${k}`).textContent = fmtBytes(s.memActual) + ' / ' + fmtBytes(s.memLimit);
+            bar.style.width      = Math.min(s.memPct, 100).toFixed(1) + '%';
+            bar.style.background = barColor(s.memPct);
+            document.getElementById(`rp-${k}`).textContent = s.memPct + '%';
+        }
+    }
+
+    async function loadStats(firstLoad = false) {
+        if (firstLoad) {
+            document.getElementById('res-body').innerHTML =
+                '<div class="res-loading"><span class="res-spinner"></span>Coletando métricas…</div>';
+        }
+        try {
+            const res  = await fetch('stats.php');
+            const data = await res.json();
+            if (data && data.error) {
+                const msgs = {
+                    socket_not_found: 'Docker socket não montado no container.',
+                    failed_to_list:   'Falha ao listar containers via Docker API.',
+                };
+                document.getElementById('res-body').innerHTML =
+                    `<p class="empty-root">${msgs[data.error] ?? 'Erro desconhecido.'}</p>`;
+                resReady = false;
+                return;
+            }
+            resReady ? applyUpdate(data) : renderFull(data);
+        } catch {
+            if (!resReady) {
+                document.getElementById('res-body').innerHTML =
+                    '<p class="empty-root">Erro ao carregar métricas.</p>';
+            }
+        }
+    }
+
+    loadStats(true);
+    setInterval(() => loadStats(false), 3000);
+    document.getElementById('res-refresh').addEventListener('click', () => loadStats(false));
 </script>
 </body>
 </html>

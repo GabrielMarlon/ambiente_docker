@@ -15,6 +15,7 @@
     --success:      #3fb950;
     --success-dim:  #238636;
     --danger:       #f85149;
+    --warning:      #e3b341;
     --radius-sm:    6px;
     --radius-md:    10px;
     --radius-lg:    12px;
@@ -287,6 +288,68 @@ details[open] > .cat-summary .chevron { transform: rotate(90deg); }
     font-style: italic;
     border-top: 1px solid var(--border-subtle);
 }
+
+/* ── Recursos dos containers ─────────────────────────── */
+.res-refresh-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-dim); padding: .2rem;
+    display: flex; align-items: center;
+    border-radius: var(--radius-sm);
+    transition: color .15s, background .15s;
+}
+.res-refresh-btn:hover { color: var(--accent); background: var(--accent-dim); }
+
+.res-table { width: 100%; border-collapse: collapse; }
+.res-table th {
+    font-size: .7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--text-dim);
+    padding: 0 .5rem .65rem; text-align: left;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.res-table td {
+    padding: .6rem .5rem; font-size: .82rem;
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: middle;
+}
+.res-table tr:last-child td { border-bottom: none; }
+
+.res-name {
+    font-family: var(--font-mono); font-size: .75rem;
+    color: var(--text); white-space: nowrap;
+}
+.res-cpu {
+    font-family: var(--font-mono); font-size: .75rem;
+    color: var(--text-muted); text-align: right; white-space: nowrap;
+}
+.res-mem-label {
+    font-family: var(--font-mono); font-size: .72rem;
+    color: var(--text-dim); white-space: nowrap;
+}
+.res-bar-cell { width: 120px; padding-right: .25rem !important; }
+.res-bar-track {
+    height: 6px; border-radius: 3px;
+    background: var(--surface-3); overflow: hidden;
+}
+.res-bar-fill {
+    height: 100%; border-radius: 3px;
+    transition: width .4s ease, background .4s ease;
+}
+.res-pct {
+    font-family: var(--font-mono); font-size: .7rem;
+    color: var(--text-muted); text-align: right; white-space: nowrap;
+    padding-left: .25rem !important;
+}
+
+.res-loading {
+    display: flex; align-items: center; gap: .6rem;
+    color: var(--text-dim); font-size: .82rem; padding: .35rem 0;
+}
+.res-spinner {
+    width: 14px; height: 14px; flex-shrink: 0; border-radius: 50%;
+    border: 2px solid var(--border); border-top-color: var(--accent);
+    animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .empty-root {
     font-size: .82rem; color: var(--text-dim);
