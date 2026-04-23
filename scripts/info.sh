@@ -23,10 +23,6 @@ PORT_HTTP="${PORT_HTTP:-80}"
 PORT_PHPMYADMIN="${PORT_PHPMYADMIN:-8081}"
 PORT_MYSQL="${PORT_MYSQL:-3306}"
 PORT_MARIADB="${PORT_MARIADB:-3307}"
-PORT_PROMETHEUS="${PORT_PROMETHEUS:-9090}"
-PORT_GRAFANA="${PORT_GRAFANA:-3000}"
-PORT_CADVISOR="${PORT_CADVISOR:-8090}"
-PORT_ZABBIX_WEB="${PORT_ZABBIX_WEB:-8085}"
 MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-root}"
 MYSQL_USER="${MYSQL_USER:-dev}"
 MYSQL_PASSWORD="${MYSQL_PASSWORD:-dev123}"
@@ -97,22 +93,6 @@ echo -e "  ${DIM}Usuário:  root   Senha: ${MYSQL_ROOT_PASSWORD}${RESET}"
 echo -e "  ${DIM}  —ou—${RESET}"
 echo -e "  ${DIM}Usuário:  ${MYSQL_USER}   Senha: ${MYSQL_PASSWORD}${RESET}"
 echo ""
-# Monitoramento (exibe apenas se os containers estiverem rodando)
-MONITORING_ACTIVE=$(docker ps --filter "name=dev_prometheus" --format "{{.Names}}" 2>/dev/null)
-ZABBIX_ACTIVE=$(docker ps --filter "name=dev_zabbix_web" --format "{{.Names}}" 2>/dev/null)
 
-if [ -n "$MONITORING_ACTIVE" ] || [ -n "$ZABBIX_ACTIVE" ]; then
-    echo -e "${BOLD}  Monitoramento${RESET}"
-    if [ -n "$MONITORING_ACTIVE" ]; then
-        echo -e "  ${GREEN}►${RESET} Prometheus  ${CYAN}http://localhost:${PORT_PROMETHEUS}${RESET}"
-        echo -e "  ${GREEN}►${RESET} Grafana     ${CYAN}http://localhost:${PORT_GRAFANA}${RESET}  ${DIM}(admin / admin)${RESET}"
-        echo -e "  ${GREEN}►${RESET} cAdvisor    ${CYAN}http://localhost:${PORT_CADVISOR}${RESET}"
-    fi
-    if [ -n "$ZABBIX_ACTIVE" ]; then
-        echo -e "  ${GREEN}►${RESET} Zabbix      ${CYAN}http://localhost:${PORT_ZABBIX_WEB}${RESET}  ${DIM}(Admin / zabbix)${RESET}"
-    fi
-    echo ""
-fi
-
-echo -e "${BLUE}${BOLD}  Dica:${RESET} ${DIM}make apache  |  make nginx  |  make monitoring  |  make zabbix${RESET}"
+echo -e "${BLUE}${BOLD}  Dica:${RESET} ${DIM}make apache  |  make nginx${RESET}"
 echo ""

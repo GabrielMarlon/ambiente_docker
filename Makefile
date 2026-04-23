@@ -2,8 +2,7 @@
 # Makefile — atalhos para o ambiente Docker de desenvolvimento
 # =============================================================
 .PHONY: help apache nginx down build rebuild logs shell \
-        mysql-cli mariadb-cli composer npm status clean info \
-        monitoring monitoring-down zabbix zabbix-down
+        mysql-cli mariadb-cli composer npm status clean info
 
 COMPOSE = docker compose
 
@@ -39,12 +38,6 @@ help:
 	@echo "  make npm cmd='install'"
 	@echo "  make clean             Remove volumes (CUIDADO!)"
 	@echo ""
-	@echo "  Monitoramento:"
-	@echo "  make monitoring        Sobe Prometheus + Grafana + cAdvisor"
-	@echo "  make monitoring-down   Para o stack de monitoramento"
-	@echo "  make zabbix            Sobe Zabbix (server + web + agent)"
-	@echo "  make zabbix-down       Para o stack Zabbix"
-	@echo ""
 	@echo "  Servidor ativo: $(WEB_SERVER)"
 	@echo ""
 
@@ -62,7 +55,7 @@ nginx:
 
 # Para todos os containers (todos os profiles)
 down:
-	$(COMPOSE) --profile apache --profile nginx --profile monitoring --profile zabbix down
+	$(COMPOSE) --profile apache --profile nginx down
 
 # Builda as imagens
 build:
@@ -104,37 +97,7 @@ composer:
 npm:
 	docker exec -it $(WEB_CONTAINER) npm $(cmd)
 
-# Prometheus + Grafana + cAdvisor
-monitoring:
-	$(COMPOSE) --profile monitoring up -d
-	@echo ""
-	@echo "  Stack de monitoramento iniciado:"
-	@echo "    Prometheus  →  http://localhost:9090"
-	@echo "    Grafana     →  http://localhost:3000  (admin / admin)"
-	@echo "    cAdvisor    →  http://localhost:8090"
-	@echo ""
-	@echo "  No Grafana, importe o dashboard de containers:"
-	@echo "    Dashboards > Import > ID 14282  (Docker cAdvisor)"
-	@echo ""
-
-monitoring-down:
-	$(COMPOSE) --profile monitoring down
-
-# Zabbix server + web + agent
-zabbix:
-	$(COMPOSE) --profile zabbix up -d
-	@echo ""
-	@echo "  Stack Zabbix iniciado (aguarde ~30s para o banco inicializar):"
-	@echo "    Zabbix Web  →  http://localhost:8085  (Admin / zabbix)"
-	@echo ""
-	@echo "  Para monitorar containers, configure o host 'dev-environment'"
-	@echo "  no Zabbix Web apontando para o agente dev_zabbix_agent:10050"
-	@echo ""
-
-zabbix-down:
-	$(COMPOSE) --profile zabbix down
-
 # CUIDADO: remove volumes persistentes dos bancos
 clean:
 	@read -p "Isso apagará todos os dados dos bancos. Confirmar? [s/N] " ans; \
-	[ "$$ans" = "s" ] && $(COMPOSE) --profile apache --profile nginx --profile monitoring --profile zabbix down -v || echo "Operação cancelada."
+	[ "$$ans" = "s" ] && $(COMPOSE) --profile apache --profile nginx down -v || echo "Operação cancelada."
