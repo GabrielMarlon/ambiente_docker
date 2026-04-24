@@ -2,7 +2,8 @@
 # Makefile — atalhos para o ambiente Docker de desenvolvimento
 # =============================================================
 .PHONY: help apache nginx down build rebuild logs shell \
-        mysql-cli mariadb-cli composer npm status clean info
+        mysql-cli mariadb-cli composer npm status clean info \
+        ngrok-apache ngrok-nginx ngrok-stop ngrok-url
 
 COMPOSE = docker compose
 
@@ -40,6 +41,13 @@ help:
 	@echo ""
 	@echo "  Servidor ativo: $(WEB_SERVER)"
 	@echo ""
+	@echo "  Túnel público (ngrok)"
+	@echo "  ─────────────────────────────────"
+	@echo "  make ngrok-apache      Sobe Apache + ngrok (túnel público)"
+	@echo "  make ngrok-nginx       Sobe Nginx  + ngrok (túnel público)"
+	@echo "  make ngrok-stop        Para o container ngrok"
+	@echo "  make ngrok-url         Exibe a URL pública do ngrok"
+	@echo ""
 
 # Sobe com Apache e grava no .env
 apache:
@@ -53,9 +61,32 @@ nginx:
 	$(COMPOSE) --profile nginx up -d
 	@bash scripts/info.sh
 
+# Sobe com Apache + ngrok e grava no .env
+ngrok-apache:
+	@sed -i 's/^WEB_SERVER=.*/WEB_SERVER=apache/' .env
+	NGROK_TARGET=web $(COMPOSE) --profile apache --profile ngrok up -d
+	@bash scripts/info.sh
+
+# Sobe com Nginx + ngrok e grava no .env
+ngrok-nginx:
+	@sed -i 's/^WEB_SERVER=.*/WEB_SERVER=nginx/' .env
+	NGROK_TARGET=nginx $(COMPOSE) --profile nginx --profile ngrok up -d
+	@bash scripts/info.sh
+
+# Para o container ngrok
+ngrok-stop:
+	$(COMPOSE) --profile ngrok stop ngrok
+
+# Exibe a URL pública atual do ngrok
+ngrok-url:
+	@curl -s http://localhost:$${PORT_NGROK:-4040}/api/tunnels 2>/dev/null \
+	    | grep -o '"public_url":"[^"]*"' | grep https \
+	    | cut -d'"' -f4 | xargs -I{} echo "  URL pública: {}" \
+	    || echo "  ngrok não está rodando ou ainda está inicializando..."
+
 # Para todos os containers (todos os profiles)
 down:
-	$(COMPOSE) --profile apache --profile nginx down
+	$(COMPOSE) --profile apache --profile nginx --profile ngrok down
 
 # Builda as imagens
 build:

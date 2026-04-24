@@ -23,6 +23,7 @@ PORT_HTTP="${PORT_HTTP:-80}"
 PORT_PHPMYADMIN="${PORT_PHPMYADMIN:-8081}"
 PORT_MYSQL="${PORT_MYSQL:-3306}"
 PORT_MARIADB="${PORT_MARIADB:-3307}"
+PORT_NGROK="${PORT_NGROK:-4040}"
 MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-root}"
 MYSQL_USER="${MYSQL_USER:-dev}"
 MYSQL_PASSWORD="${MYSQL_PASSWORD:-dev123}"
@@ -94,5 +95,14 @@ echo -e "  ${DIM}  —ou—${RESET}"
 echo -e "  ${DIM}Usuário:  ${MYSQL_USER}   Senha: ${MYSQL_PASSWORD}${RESET}"
 echo ""
 
-echo -e "${BLUE}${BOLD}  Dica:${RESET} ${DIM}make apache  |  make nginx${RESET}"
+NGROK_URL=$(curl -s "http://localhost:${PORT_NGROK}/api/tunnels" 2>/dev/null \
+    | grep -o '"public_url":"[^"]*"' | grep https | cut -d'"' -f4)
+if [ -n "$NGROK_URL" ]; then
+    echo -e "${BOLD}  Túnel Público (ngrok)${RESET}"
+    echo -e "  ${GREEN}►${RESET} URL pública   ${CYAN}${NGROK_URL}${RESET}"
+    echo -e "  ${GREEN}►${RESET} Painel ngrok  ${CYAN}http://localhost:${PORT_NGROK}${RESET}"
+    echo ""
+fi
+
+echo -e "${BLUE}${BOLD}  Dica:${RESET} ${DIM}make apache  |  make nginx  |  make ngrok-nginx${RESET}"
 echo ""
