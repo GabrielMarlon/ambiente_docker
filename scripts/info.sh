@@ -98,8 +98,14 @@ echo ""
 NGROK_URL=$(curl -s "http://localhost:${PORT_NGROK}/api/tunnels" 2>/dev/null \
     | grep -o '"public_url":"[^"]*"' | grep https | cut -d'"' -f4)
 if [ -n "$NGROK_URL" ]; then
+    NGROK_PROJECT="${NGROK_PROJECT:-}"
     echo -e "${BOLD}  Túnel Público (ngrok)${RESET}"
-    echo -e "  ${GREEN}►${RESET} URL pública   ${CYAN}${NGROK_URL}${RESET}"
+    if [ -n "$NGROK_PROJECT" ]; then
+        echo -e "  ${GREEN}►${RESET} Projeto       ${CYAN}${NGROK_URL}/www/${NGROK_PROJECT}/${RESET}"
+        echo -e "  ${DIM}    (raiz)     ${NGROK_URL}${RESET}"
+    else
+        echo -e "  ${GREEN}►${RESET} URL pública   ${CYAN}${NGROK_URL}${RESET}"
+    fi
     echo -e "  ${GREEN}►${RESET} Painel ngrok  ${CYAN}http://localhost:${PORT_NGROK}${RESET}"
     echo ""
 fi

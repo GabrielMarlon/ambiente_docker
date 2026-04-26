@@ -3,7 +3,7 @@
 # =============================================================
 .PHONY: help apache nginx down build rebuild logs shell \
         mysql-cli mariadb-cli composer npm status clean info \
-        ngrok-apache ngrok-nginx ngrok-stop ngrok-url
+        ngrok ngrok-apache ngrok-nginx ngrok-stop ngrok-url ngrok-project
 
 COMPOSE = docker compose
 
@@ -13,9 +13,11 @@ WEB_SERVER  := $(if $(WEB_SERVER),$(WEB_SERVER),apache)
 
 # Container do servidor ativo
 ifeq ($(WEB_SERVER),nginx)
-  WEB_CONTAINER = dev_web_nginx
+  WEB_CONTAINER  = dev_web_nginx
+  NGROK_CONTAINER = nginx
 else
-  WEB_CONTAINER = dev_web_apache
+  WEB_CONTAINER  = dev_web_apache
+  NGROK_CONTAINER = web
 endif
 
 # Exibe esta ajuda
@@ -43,8 +45,10 @@ help:
 	@echo ""
 	@echo "  Túnel público (ngrok)"
 	@echo "  ─────────────────────────────────"
-	@echo "  make ngrok-apache      Sobe Apache + ngrok (túnel público)"
-	@echo "  make ngrok-nginx       Sobe Nginx  + ngrok (túnel público)"
+	@echo "  make ngrok             Sobe ngrok com o servidor ativo (pede projeto)"
+	@echo "  make ngrok-apache      Sobe Apache + ngrok (pede projeto)"
+	@echo "  make ngrok-nginx       Sobe Nginx  + ngrok (pede projeto)"
+	@echo "  make ngrok-project     Troca o projeto exposto sem reiniciar"
 	@echo "  make ngrok-stop        Para o container ngrok"
 	@echo "  make ngrok-url         Exibe a URL pública do ngrok"
 	@echo ""
@@ -61,16 +65,29 @@ nginx:
 	$(COMPOSE) --profile nginx up -d
 	@bash scripts/info.sh
 
+# Sobe ngrok com o servidor ativo (lê WEB_SERVER do .env)
+ngrok:
+	@bash scripts/ngrok-select.sh
+	NGROK_TARGET=$(NGROK_CONTAINER) $(COMPOSE) --profile $(WEB_SERVER) --profile ngrok up -d
+	@bash scripts/info.sh
+
 # Sobe com Apache + ngrok e grava no .env
 ngrok-apache:
+	@bash scripts/ngrok-select.sh
 	@sed -i 's/^WEB_SERVER=.*/WEB_SERVER=apache/' .env
 	NGROK_TARGET=web $(COMPOSE) --profile apache --profile ngrok up -d
 	@bash scripts/info.sh
 
 # Sobe com Nginx + ngrok e grava no .env
 ngrok-nginx:
+	@bash scripts/ngrok-select.sh
 	@sed -i 's/^WEB_SERVER=.*/WEB_SERVER=nginx/' .env
 	NGROK_TARGET=nginx $(COMPOSE) --profile nginx --profile ngrok up -d
+	@bash scripts/info.sh
+
+# Troca o projeto exposto sem reiniciar (apenas atualiza o .env e exibe a URL)
+ngrok-project:
+	@bash scripts/ngrok-select.sh
 	@bash scripts/info.sh
 
 # Para o container ngrok
