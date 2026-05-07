@@ -3,7 +3,8 @@
 # =============================================================
 .PHONY: help apache nginx down build rebuild logs shell \
         mysql-cli mariadb-cli composer npm status clean info \
-        ngrok ngrok-apache ngrok-nginx ngrok-stop ngrok-url ngrok-project
+        ngrok ngrok-apache ngrok-nginx ngrok-stop ngrok-url ngrok-project \
+        node node-stop node-shell node-logs node-project
 
 COMPOSE = docker compose
 
@@ -51,6 +52,14 @@ help:
 	@echo "  make ngrok-project     Troca o projeto exposto sem reiniciar"
 	@echo "  make ngrok-stop        Para o container ngrok"
 	@echo "  make ngrok-url         Exibe a URL pública do ngrok"
+	@echo ""
+	@echo "  Node.js"
+	@echo "  ─────────────────────────────────"
+	@echo "  make node              Sobe app Node.js (seleciona projeto)"
+	@echo "  make node-stop         Para o container Node.js"
+	@echo "  make node-shell        Shell no container Node.js"
+	@echo "  make node-logs         Logs do app Node.js"
+	@echo "  make node-project      Troca o projeto Node.js e reinicia"
 	@echo ""
 
 # Sobe com Apache e grava no .env
@@ -101,9 +110,34 @@ ngrok-url:
 	    | cut -d'"' -f4 | xargs -I{} echo "  URL pública: {}" \
 	    || echo "  ngrok não está rodando ou ainda está inicializando..."
 
+# Sobe app Node.js (seleciona projeto interativamente)
+node:
+	@bash scripts/node-select.sh
+	$(COMPOSE) --profile node up -d
+	@bash scripts/info.sh
+
+# Para o container Node.js
+node-stop:
+	$(COMPOSE) stop node
+
+# Shell no container Node.js
+node-shell:
+	docker exec -it dev_node sh
+
+# Logs do app Node.js
+node-logs:
+	$(COMPOSE) logs -f node
+
+# Troca o projeto Node.js e reinicia o container
+node-project:
+	@bash scripts/node-select.sh
+	@docker restart dev_node 2>/dev/null \
+	    && echo "  Container reiniciado com novo projeto." \
+	    || echo "  Container nao esta rodando. Use: make node"
+
 # Para todos os containers (todos os profiles)
 down:
-	$(COMPOSE) --profile apache --profile nginx --profile ngrok down
+	$(COMPOSE) --profile apache --profile nginx --profile ngrok --profile node down
 
 # Builda as imagens
 build:

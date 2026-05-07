@@ -24,6 +24,8 @@ PORT_PHPMYADMIN="${PORT_PHPMYADMIN:-8081}"
 PORT_MYSQL="${PORT_MYSQL:-3306}"
 PORT_MARIADB="${PORT_MARIADB:-3307}"
 PORT_NGROK="${PORT_NGROK:-4040}"
+PORT_NODE="${PORT_NODE:-3000}"
+NODE_PROJECT="${NODE_PROJECT:-}"
 MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-root}"
 MYSQL_USER="${MYSQL_USER:-dev}"
 MYSQL_PASSWORD="${MYSQL_PASSWORD:-dev123}"
@@ -110,5 +112,12 @@ if [ -n "$NGROK_URL" ]; then
     echo ""
 fi
 
-echo -e "${BLUE}${BOLD}  Dica:${RESET} ${DIM}make apache  |  make nginx  |  make ngrok-nginx${RESET}"
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^dev_node$'; then
+    echo -e "${BOLD}  Node.js${RESET}"
+    echo -e "  ${GREEN}►${RESET} App            ${CYAN}http://localhost:${PORT_NODE}${RESET}"
+    [ -n "$NODE_PROJECT" ] && echo -e "  ${DIM}    Projeto: www/${NODE_PROJECT}${RESET}"
+    echo ""
+fi
+
+echo -e "${BLUE}${BOLD}  Dica:${RESET} ${DIM}make apache  |  make nginx  |  make node  |  make ngrok-nginx${RESET}"
 echo ""

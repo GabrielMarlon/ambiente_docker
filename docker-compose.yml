@@ -137,6 +137,37 @@ services:
       - devnet
 
   # -----------------------------------------------------------
+  # Node.js  →  make node
+  # -----------------------------------------------------------
+  node:
+    image: node:lts-alpine
+    container_name: dev_node
+    restart: unless-stopped
+    profiles: [node]
+    working_dir: /app
+    ports:
+      - "${PORT_NODE:-3000}:${PORT_NODE:-3000}"
+    volumes:
+      - ./www:/app/projects:rw
+      - ./scripts/node-start.sh:/usr/local/bin/node-start:ro
+    environment:
+      NODE_ENV:     ${NODE_ENV:-development}
+      PORT:         ${PORT_NODE:-3000}
+      NODE_PROJECT: ${NODE_PROJECT:-}
+      NODE_CMD:     ${NODE_CMD:-npm start}
+      DB_HOST:      mysql
+      DB_PORT:      "3306"
+      DB_USER:      ${MYSQL_USER:-dev}
+      DB_PASSWORD:  ${MYSQL_PASSWORD:-dev123}
+      DB_NAME:      ${MYSQL_DATABASE:-}
+    command: sh /usr/local/bin/node-start
+    depends_on:
+      - mysql
+      - mariadb
+    networks:
+      - devnet
+
+  # -----------------------------------------------------------
   # phpMyAdmin
   # -----------------------------------------------------------
   phpmyadmin:
